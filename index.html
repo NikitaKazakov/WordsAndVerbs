@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#14120f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Глаголы" />
+    <meta name="description" content="Квиз неправильных английских глаголов: перевод и три формы." />
+    <title>Неправильные глаголы</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div class="stat">
+          <span class="stat-label">серия</span>
+          <span id="streak" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">рекорд</span>
+          <span id="best" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">сегодня</span>
+          <span id="today" class="stat-value">0</span>
+        </div>
+      </header>
+
+      <main class="stage">
+        <p class="hint" id="hint">выбери 3 формы</p>
+        <h1 class="prompt" id="prompt">Загрузка…</h1>
+        <p class="forms" id="forms" hidden></p>
+      </main>
+
+      <section class="grid" id="grid" aria-label="Варианты форм"></section>
+
+      <div class="actions">
+        <button type="button" class="ghost" id="dont-know">Не знаю</button>
+        <button type="button" class="next" id="next" hidden>Дальше</button>
+      </div>
+
+      <section class="mastery" aria-label="Прогресс">
+        <div class="bar" id="bar">
+          <span class="seg new" id="seg-new"></span>
+          <span class="seg learning" id="seg-learning"></span>
+          <span class="seg known" id="seg-known"></span>
+        </div>
+        <p class="legend" id="legend">новые 277 · учу 0 · знаю 0</p>
+      </section>
+
+      <button type="button" class="reset" id="reset">Сбросить прогресс</button>
+    </div>
+
+    <div class="flash" id="flash" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
