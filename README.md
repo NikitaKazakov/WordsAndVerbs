@@ -4,9 +4,28 @@
 
 Правила, алгоритм 70/30 и формат прогресса — в [SPEC.md](SPEC.md).
 
+## Как выложить на GitHub Pages
+
+Репозиторий должен быть **публичным** — на бесплатном GitHub Pages иначе не включится.
+
+1. Создай аккаунт на [github.com](https://github.com), если его ещё нет.
+2. Создай новый репозиторий, например `WordsAndVerbs`. Не ставь галку «Add a README».
+3. В папке проекта выполни (подставь свой логин):
+
+```bash
+git remote add origin https://github.com/ТВОЙ_ЛОГИН/WordsAndVerbs.git
+git push -u origin main
+```
+
+4. На GitHub: **Settings → Pages**.
+5. Source: **GitHub Actions** (в репозитории уже есть `.github/workflows/pages.yml`).
+   Либо **Deploy from a branch** → `main` → `/ (root)`.
+6. Через 1–2 минуты откроется:
+   `https://ТВОЙ_ЛОГИН.github.io/WordsAndVerbs/`
+
 ## Как открыть на телефоне
 
-После выкладки на GitHub Pages открой ссылку сайта в Safari или Chrome.
+Открой ссылку Pages в Safari или Chrome.
 
 На iPhone: «Поделиться» → **На экран «Домой»**.  
 На Android: меню браузера → **Установить приложение** / **На главный экран**.
