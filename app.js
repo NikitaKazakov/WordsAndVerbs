@@ -1,6 +1,6 @@
 const STORAGE_KEY = "irregular-verbs-quiz-v1";
 const MASTER_STREAK = 3;
-const AUTO_NEXT_MS = 2200;
+const HINTS = ["сначала 1-я форма", "теперь 2-я форма", "теперь 3-я форма"];
 
 const els = {
   streak: document.getElementById("streak"),
@@ -25,10 +25,9 @@ const state = {
   progress: null,
   verb: null,
   tiles: [],
-  selected: new Set(),
+  selected: [],
   locked: false,
   showingResult: false,
-  nextTimer: 0,
 };
 
 function emptyVerbStats() {
@@ -238,14 +237,25 @@ function renderStats() {
   els.legend.textContent = `новые ${fresh} · учу ${learning} · знаю ${known} / ${total}`;
 }
 
+function expectedForms() {
+  const verb = state.verb;
+  return [verb.v1, verb.v2, verb.v3];
+}
+
+function pickIndex(tileId) {
+  return state.selected.indexOf(tileId);
+}
+
 function tileClass(tile) {
   const classes = ["tile"];
+  const pos = pickIndex(tile.id);
   if (state.showingResult) {
-    const picked = state.selected.has(tile.id);
-    if (tile.correct && picked) classes.push("good");
-    else if (tile.correct && !picked) classes.push("missed");
-    else if (!tile.correct && picked) classes.push("bad");
-  } else if (state.selected.has(tile.id)) {
+    if (pos >= 0) {
+      classes.push(tile.text === expectedForms()[pos] ? "good" : "bad");
+    } else if (tile.correct) {
+      classes.push("missed");
+    }
+  } else if (pos >= 0) {
     classes.push("picked");
   }
   return classes.join(" ");
@@ -257,8 +267,15 @@ function renderGrid() {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = tileClass(tile);
-      btn.textContent = tile.text;
-      btn.disabled = state.locked && !state.showingResult;
+      btn.disabled = state.showingResult;
+      const pos = pickIndex(tile.id);
+      if (pos >= 0) {
+        const mark = document.createElement("span");
+        mark.className = "tile-n";
+        mark.textContent = String(pos + 1);
+        btn.append(mark);
+      }
+      btn.append(tile.text);
       btn.addEventListener("click", () => onTile(tile.id));
       return btn;
     })
@@ -268,7 +285,7 @@ function renderGrid() {
 function renderRound() {
   const verb = state.verb;
   els.prompt.textContent = verb.ru;
-  els.hint.textContent = state.showingResult ? "три формы" : "выбери 3 формы";
+  els.hint.textContent = state.showingResult ? "три формы" : HINTS[state.selected.length] || HINTS[0];
   els.forms.hidden = !state.showingResult;
   if (state.showingResult) {
     els.forms.textContent = `${verb.v1}  →  ${verb.v2}  →  ${verb.v3}`;
@@ -318,45 +335,46 @@ function applyResult(ok) {
   saveProgress();
 }
 
-function allCorrectSelected() {
-  return state.tiles.filter((tile) => tile.correct).every((tile) => state.selected.has(tile.id));
+function inCorrectOrder() {
+  const expected = expectedForms();
+  return (
+    state.selected.length === 3 &&
+    state.selected.every((id, i) => {
+      const tile = state.tiles.find((item) => item.id === id);
+      return tile && tile.text === expected[i];
+    })
+  );
+}
+
+function orderedCorrectIds() {
+  return [1, 2, 3].map((form) => state.tiles.find((tile) => tile.correct && tile.form === form).id);
 }
 
 function finishRound(gaveUp) {
   if (state.showingResult) return;
   state.locked = true;
   state.showingResult = true;
-  if (gaveUp) {
-    for (const tile of state.tiles) {
-      if (tile.correct) state.selected.add(tile.id);
-    }
-  }
-  applyResult(!gaveUp && allCorrectSelected());
+  if (gaveUp) state.selected = orderedCorrectIds();
+  applyResult(!gaveUp && inCorrectOrder());
   renderRound();
-  clearTimeout(state.nextTimer);
-  state.nextTimer = window.setTimeout(nextRound, AUTO_NEXT_MS);
 }
 
 function onTile(id) {
-  if (state.showingResult) {
-    nextRound();
-    return;
-  }
-  if (state.locked) return;
-  if (state.selected.has(id)) state.selected.delete(id);
+  if (state.showingResult || state.locked) return;
+  const pos = pickIndex(id);
+  if (pos >= 0) state.selected = state.selected.slice(0, pos);
   else {
-    if (state.selected.size >= 3) return;
-    state.selected.add(id);
+    if (state.selected.length >= 3) return;
+    state.selected.push(id);
   }
-  renderGrid();
-  if (state.selected.size === 3) finishRound(false);
+  renderRound();
+  if (state.selected.length === 3) finishRound(false);
 }
 
 function nextRound() {
-  clearTimeout(state.nextTimer);
   state.showingResult = false;
   state.locked = false;
-  state.selected = new Set();
+  state.selected = [];
   state.verb = pickNext();
   state.tiles = buildTiles(state.verb);
   renderRound();

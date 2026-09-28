@@ -118,6 +118,7 @@ body {
 
 .tile {
   appearance: none;
+  position: relative;
   border: 1px solid var(--line);
   background: var(--tile);
   color: var(--tile-ink);
@@ -131,8 +132,33 @@ body {
   word-break: break-word;
 }
 
+.tile-n {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.tile.good .tile-n,
+.tile.missed .tile-n {
+  color: #d9f5e2;
+}
+
+.tile.bad .tile-n {
+  color: #ffd6cf;
+}
+
 .tile:disabled {
   opacity: 1;
+}
+
+.tile.picked,
+.tile.good,
+.tile.bad {
+  padding-left: 18px;
 }
 
 .tile.picked {
