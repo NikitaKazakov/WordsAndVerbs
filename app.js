@@ -1,6 +1,29 @@
 const STORAGE_KEY = "irregular-verbs-quiz-v1";
 const MASTER_STREAK = 3;
 const HINTS = ["сначала 1-я форма", "теперь 2-я форма", "теперь 3-я форма"];
+const MODE_IDS = ["simple", "prefixed", "mixed"];
+const PREFIXES = [
+  "under",
+  "over",
+  "with",
+  "back",
+  "fore",
+  "broad",
+  "brow",
+  "spot",
+  "part",
+  "gain",
+  "way",
+  "mis",
+  "out",
+  "for",
+  "pre",
+  "un",
+  "re",
+  "be",
+  "in",
+  "up",
+];
 
 const els = {
   streak: document.getElementById("streak"),
@@ -18,10 +41,14 @@ const els = {
   segKnown: document.getElementById("seg-known"),
   reset: document.getElementById("reset"),
   flash: document.getElementById("flash"),
+  modes: [...document.querySelectorAll(".mode")],
 };
 
 const state = {
+  allVerbs: [],
   verbs: [],
+  store: null,
+  mode: "simple",
   progress: null,
   verb: null,
   tiles: [],
@@ -53,7 +80,6 @@ function defaultProgress(verbs) {
   const verbsMap = {};
   for (const verb of verbs) verbsMap[verb.id] = emptyVerbStats();
   return {
-    v: 1,
     verbs: verbsMap,
     lastId: null,
     currentStreak: 0,
@@ -63,32 +89,102 @@ function defaultProgress(verbs) {
   };
 }
 
-function loadProgress(verbs) {
-  const fresh = defaultProgress(verbs);
+function isPrefixedId(id, idSet) {
+  for (const prefix of PREFIXES) {
+    if (!id.startsWith(prefix) || id.length <= prefix.length + 1) continue;
+    const rest = id.slice(prefix.length);
+    if (idSet.has(rest)) return true;
+  }
+  return false;
+}
+
+function markPrefixes(verbs) {
+  const idSet = new Set(verbs.map((verb) => verb.id));
+  return verbs.map((verb) => ({ ...verb, prefixed: isPrefixedId(verb.id, idSet) }));
+}
+
+function verbsFor(mode, allVerbs) {
+  if (mode === "prefixed") return allVerbs.filter((verb) => verb.prefixed);
+  if (mode === "simple") return allVerbs.filter((verb) => !verb.prefixed);
+  return allVerbs;
+}
+
+function copyBundle(saved, pool) {
+  const bundle = defaultProgress(pool);
+  if (!saved) return bundle;
+  for (const verb of pool) {
+    const row = saved.verbs && saved.verbs[verb.id];
+    if (row) bundle.verbs[verb.id] = { ...emptyVerbStats(), ...row };
+  }
+  bundle.lastId = saved.lastId || null;
+  bundle.currentStreak = Number(saved.currentStreak) || 0;
+  bundle.bestStreak = Number(saved.bestStreak) || 0;
+  if (saved.todayDate === todayKey()) {
+    bundle.todayDate = saved.todayDate;
+    bundle.todayCount = Number(saved.todayCount) || 0;
+  }
+  return bundle;
+}
+
+function emptyStore(allVerbs) {
+  return {
+    v: 2,
+    mode: "simple",
+    modes: {
+      simple: defaultProgress(verbsFor("simple", allVerbs)),
+      prefixed: defaultProgress(verbsFor("prefixed", allVerbs)),
+      mixed: defaultProgress(allVerbs),
+    },
+  };
+}
+
+function loadStore(allVerbs) {
+  const fresh = emptyStore(allVerbs);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fresh;
     const saved = JSON.parse(raw);
-    if (!saved || saved.v !== 1 || !saved.verbs) return fresh;
-    for (const verb of verbs) {
-      const row = saved.verbs[verb.id];
-      if (row) fresh.verbs[verb.id] = { ...emptyVerbStats(), ...row };
+    if (!saved) return fresh;
+    if (saved.v === 1 && saved.verbs) {
+      fresh.mode = "mixed";
+      fresh.modes.mixed = copyBundle(saved, allVerbs);
+      return fresh;
     }
-    fresh.lastId = saved.lastId || null;
-    fresh.currentStreak = Number(saved.currentStreak) || 0;
-    fresh.bestStreak = Number(saved.bestStreak) || 0;
-    if (saved.todayDate === todayKey()) {
-      fresh.todayDate = saved.todayDate;
-      fresh.todayCount = Number(saved.todayCount) || 0;
+    if (saved.v === 2 && saved.modes) {
+      fresh.mode = MODE_IDS.includes(saved.mode) ? saved.mode : "simple";
+      for (const mode of MODE_IDS) {
+        fresh.modes[mode] = copyBundle(saved.modes[mode], verbsFor(mode, allVerbs));
+      }
+      return fresh;
     }
-    return fresh;
   } catch {
     return fresh;
   }
+  return fresh;
 }
 
 function saveProgress() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.store));
+}
+
+function renderModes() {
+  for (const btn of els.modes) {
+    btn.classList.toggle("active", btn.dataset.mode === state.mode);
+  }
+}
+
+function applyMode(mode, restart) {
+  if (!MODE_IDS.includes(mode)) mode = "simple";
+  state.mode = mode;
+  state.store.mode = mode;
+  state.verbs = verbsFor(mode, state.allVerbs);
+  state.progress = state.store.modes[mode];
+  if (state.progress.lastId && !state.verbs.some((verb) => verb.id === state.progress.lastId)) {
+    state.progress.lastId = null;
+  }
+  saveProgress();
+  renderModes();
+  if (restart) nextRound();
 }
 
 function hoursSince(ts, now) {
@@ -381,8 +477,9 @@ function nextRound() {
 }
 
 function resetProgress() {
-  if (!confirm("Сбросить весь прогресс?")) return;
-  state.progress = defaultProgress(state.verbs);
+  if (!confirm("Сбросить прогресс этого режима?")) return;
+  state.store.modes[state.mode] = defaultProgress(state.verbs);
+  state.progress = state.store.modes[state.mode];
   saveProgress();
   nextRound();
 }
@@ -397,18 +494,23 @@ async function loadVerbs() {
 
 async function main() {
   try {
-    state.verbs = await loadVerbs();
+    state.allVerbs = markPrefixes(await loadVerbs());
   } catch (err) {
     els.prompt.textContent = "Не открылось. Запусти через сайт или локальный сервер, не как файл.";
     els.hint.textContent = String(err.message || err);
     return;
   }
-  state.progress = loadProgress(state.verbs);
-  renderStats();
-  nextRound();
+  state.store = loadStore(state.allVerbs);
+  applyMode(state.store.mode, true);
   els.dontKnow.addEventListener("click", () => finishRound(true));
   els.next.addEventListener("click", nextRound);
   els.reset.addEventListener("click", resetProgress);
+  for (const btn of els.modes) {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.mode === state.mode) return;
+      applyMode(btn.dataset.mode, true);
+    });
+  }
   document.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && state.showingResult) nextRound();
   });

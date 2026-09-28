@@ -53,6 +53,30 @@ body {
   gap: 8px;
 }
 
+.modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.mode {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--muted);
+  border-radius: 12px;
+  min-height: 40px;
+  font-family: system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.mode.active {
+  border-color: var(--amber);
+  background: #3a2f1c;
+  color: var(--ink);
+}
+
 .stat {
   background: var(--bg-2);
   border: 1px solid var(--line);
