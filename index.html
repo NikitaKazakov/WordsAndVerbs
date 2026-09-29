@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#14120f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Глаголы" />
-    <meta name="description" content="Квиз неправильных английских глаголов: перевод и три формы." />
-    <title>Неправильные глаголы</title>
+    <meta name="apple-mobile-web-app-title" content="Слова" />
+    <meta name="description" content="Квиз слов, глаголов, фразовых и оборотов." />
+    <title>Слова и глаголы</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon-192.png" type="image/png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
@@ -34,19 +34,26 @@
         </div>
       </header>
 
-      <nav class="modes" aria-label="Режим">
-        <button type="button" class="mode" data-mode="simple">Простые</button>
-        <button type="button" class="mode" data-mode="prefixed">Приставки</button>
-        <button type="button" class="mode" data-mode="mixed">Смесь</button>
+      <nav class="modes sections" id="sections" aria-label="Раздел">
+        <button type="button" class="mode" data-section="words">Слова</button>
+        <button type="button" class="mode" data-section="verbs">Глаголы</button>
+        <button type="button" class="mode" data-section="phrasal">Фразовые</button>
+        <button type="button" class="mode" data-section="phrases">Обороты</button>
+      </nav>
+
+      <nav class="modes" id="verb-modes" aria-label="Глаголы" hidden>
+        <button type="button" class="mode" data-verb-mode="simple">Простые</button>
+        <button type="button" class="mode" data-verb-mode="prefixed">Приставки</button>
+        <button type="button" class="mode" data-verb-mode="mixed">Смесь</button>
       </nav>
 
       <main class="stage">
-        <p class="hint" id="hint">сначала 1-я форма</p>
+        <p class="hint" id="hint">выбери перевод</p>
         <h1 class="prompt" id="prompt">Загрузка…</h1>
         <p class="forms" id="forms" hidden></p>
       </main>
 
-      <section class="grid" id="grid" aria-label="Варианты форм"></section>
+      <section class="grid" id="grid" aria-label="Варианты"></section>
 
       <div class="actions">
         <button type="button" class="ghost" id="dont-know">Не знаю</button>
@@ -59,10 +66,32 @@
           <span class="seg learning" id="seg-learning"></span>
           <span class="seg known" id="seg-known"></span>
         </div>
-        <p class="legend" id="legend">новые 277 · учу 0 · знаю 0</p>
+        <p class="legend" id="legend">новые 0 · учу 0 · знаю 0</p>
       </section>
 
-      <button type="button" class="reset" id="reset">Сбросить прогресс</button>
+      <div class="foot">
+        <button type="button" class="ghost add" id="add-open">Добавить</button>
+        <button type="button" class="reset" id="reset">Сбросить прогресс</button>
+      </div>
+    </div>
+
+    <div class="sheet" id="sheet" hidden>
+      <form class="sheet-card" id="add-form">
+        <h2 id="sheet-title">Новое слово</h2>
+        <label>
+          По-русски
+          <input id="add-ru" name="ru" autocomplete="off" required />
+        </label>
+        <label>
+          По-английски
+          <textarea id="add-en" name="en" rows="3" required></textarea>
+        </label>
+        <p class="sheet-error" id="sheet-error" hidden></p>
+        <div class="sheet-actions">
+          <button type="button" class="ghost" id="add-cancel">Отмена</button>
+          <button type="submit" class="next">Сохранить</button>
+        </div>
+      </form>
     </div>
 
     <div class="flash" id="flash" aria-live="polite"></div>

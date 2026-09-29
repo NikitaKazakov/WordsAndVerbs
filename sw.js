@@ -1,10 +1,13 @@
-const CACHE = "verbs-quiz-v4";
+const CACHE = "verbs-quiz-v9";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./verbs.json",
+  "./words.json",
+  "./phrasal.json",
+  "./phrases.json",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
